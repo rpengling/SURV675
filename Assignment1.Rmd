@@ -7,3 +7,37 @@ output:
           keep_md: true
 ---
 
+```{r}
+library(haven) 
+library(tidyverse) 
+library(party)
+library(rpart)
+library(tree)
+library(rattle)
+library(stats)
+library(cluster)
+library(clusterSim)
+library(caret)
+library(class)
+
+uid_table <- read.csv("C:\\Users\\Owner\\Downloads\\UID_ISO_FIPS_LookUp_Table.csv")
+time_series <- read_csv("C:\\Users\\Owner\\Downloads\\time_series_covid19_confirmed_global.csv") 
+```
+
+```{r}
+
+
+
+
+
+```
+
+
+```{r}
+
+
+
+
+
+```
+
