@@ -56,14 +56,15 @@ full_long <- uid_long %>%
 
 ```{r}
 
+
 full_long_names <- names(full_long)
 
 full_wide <- full_long %>% 
-  distinct(`UID`, `Country/Region`, `Province/State`, Lat, Long, .keep_all = TRUE) %>%
   pivot_wider(
-    id_cols = full_long_names[2:10], 
-    names_from = wave, 
+    id_cols = full_long_names[11], 
+    names_from = Date, 
     values_from = full_long_names[11:26]
   )
 ```
-
+  distinct(`UID`, `Country/Region`, `Province/State`, Lat, Long, .keep_all = TRUE) %>%
+any(is.na(full_long$Combined_Key))
