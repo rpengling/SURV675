@@ -8,8 +8,8 @@ output:
 ---
 
 ```{r}
+#Load Libraries
 library(haven) 
-library(tidyverse) 
 library(party)
 library(rpart)
 library(tree)
@@ -19,15 +19,36 @@ library(cluster)
 library(clusterSim)
 library(caret)
 library(class)
+library(tidyverse)
 
+#Read in Data
 uid_table <- read.csv("C:\\Users\\Owner\\Downloads\\UID_ISO_FIPS_LookUp_Table.csv")
 time_series <- read_csv("C:\\Users\\Owner\\Downloads\\time_series_covid19_confirmed_global.csv") 
 ```
 
-```{r}
+```{r} 
+#Create a Working Copy of the Data and Change Variable Names to Match
+uid_long <- uid_table %>% 
+  rename("Long" = "Long_",
+         "Province/State" = "Province_State", 
+         "Country/Region" = "Country_Region")
 
+#Recoding blank cells to have NA
+uid_long <- uid_long %>%
+  mutate(`Province/State` = ifelse(`Province/State` == "", NA, `Province/State`), 
+         `Admin2` = ifelse(`Admin2` == "", NA, `Admin2`))
+  
+#Create a Working Copy of the Data and Pivot it
+time_long <- time_series %>% 
+  pivot_longer(
+    cols = !(1:4), 
+    names_to = "Date", 
+    values_to = "Confirmed_COVID_Cases"
+  )
 
-
+#Joining Dataframes
+full_long <- uid_long %>%
+  left_join(time_long, by = c("Province/State", "Country/Region", "Lat", "Long")) 
 
 
 ```
@@ -35,9 +56,14 @@ time_series <- read_csv("C:\\Users\\Owner\\Downloads\\time_series_covid19_confir
 
 ```{r}
 
+full_long_names <- names(full_long)
 
-
-
-
+full_wide <- full_long %>% 
+  distinct(`UID`, `Country/Region`, `Province/State`, Lat, Long, .keep_all = TRUE) %>%
+  pivot_wider(
+    id_cols = full_long_names[2:10], 
+    names_from = wave, 
+    values_from = full_long_names[11:26]
+  )
 ```
 
