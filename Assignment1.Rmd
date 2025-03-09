@@ -5,6 +5,8 @@ date: "2025-03-07"
 output: 
   html_document:
           keep_md: true
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r}
@@ -46,25 +48,99 @@ time_long <- time_series %>%
     values_to = "Confirmed_COVID_Cases"
   )
 
-#Joining Dataframes
+#Making R Read the "Date" column as actual dates
+time_long <- time_long %>%
+  mutate( 
+    Date = lubridate::mdy(time_long$Date)
+    )
+  
+
+#Joining Dataframes, creating the long form dataset
 full_long <- uid_long %>%
   left_join(time_long, by = c("Province/State", "Country/Region", "Lat", "Long")) 
-
 
 ```
 
 
 ```{r}
-
-
+#Pulling column names
 full_long_names <- names(full_long)
 
+#Creating wide form dataframe
 full_wide <- full_long %>% 
+  dplyr::select(`Combined_Key`, `Date`, `Confirmed_COVID_Cases`, `Population`) %>%
+  distinct() %>%
   pivot_wider(
     id_cols = full_long_names[11], 
-    names_from = Date, 
-    values_from = full_long_names[11:26]
+    names_from = full_long_names[13], 
+    values_from = full_long_names[14]
   )
 ```
-  distinct(`UID`, `Country/Region`, `Province/State`, Lat, Long, .keep_all = TRUE) %>%
-any(is.na(full_long$Combined_Key))
+
+```{r}
+#Graphs 
+
+#Create dataframe with summed cases over time
+global_trend <- full_long %>%
+  group_by(Date) %>%
+  summarise(Total_Cases = sum(Confirmed_COVID_Cases, na.rm = TRUE), .groups = "drop")
+
+#-------Graph Over Time-------
+Covid_Over_Time <- global_trend %>%
+  ggplot(aes(x = Date, y = log1p(Total_Cases))) +
+    geom_point(alpha = 0.15,
+      position = position_jitter(width = .55, height = .56), 
+      color = "deepskyblue4") +
+    stat_summary(aes(group = 1), fun = mean,
+      geom = "smooth", 
+      color = "goldenrod1",
+      linetype = 1,
+      linewidth = 1.25) +
+  theme_bw() +
+    labs(x = "Date", y = "Log(Number of Confirmed COVID Cases + 1)",
+        title = "Figure 1. 
+        Log-transformed COVID-19 Cases 
+        Over Time",
+        caption = "Data from CSSEGISandData/COVID-19")
+
+#ggsave("1. Covid_Over_Time.png", width = 8, height = 8)
+
+
+
+
+
+##Past code of mine to assist in writing new code
+#-------By Education-------
+Health_by_Education_Level <- data_long %>%
+  filter(!is.na(edu_small_fct)) %>%
+  mutate(edu_small_fct = factor(edu_small_fct,
+        levels = levels(edu_small_fct)[c(2, 1, 3)])) %>%
+  ggplot(aes(time, y = health, color = edu_small_fct)) + 
+    stat_summary(fun = mean,
+      geom = "point", 
+      shape = 18, 
+      size = 3) +
+  stat_summary(aes(group = edu_small_fct, linetype = edu_small_fct), 
+               fun = mean, 
+               geom = "smooth", 
+               linewidth = 1.25) + 
+  scale_color_manual(values = c("Higher" = "#CC79A7", "High school" = "#009E73", "Primary" = "#E69F00")) +
+  theme_classic() +
+  labs(x = "Time", y = "Health Rating",
+      title = "Figure 4. 
+      Average Change of Health Ratings Over Time by
+      Education Level",
+      linetype = "Education", 
+      color = "Education",
+      caption = "Data from HRS Waves '96, '98 & '00")
+
+ggsave("4. Health_by_Education_Level.png", width = 5, height = 5)
+
+```
+
+
+
+
+
+
+
